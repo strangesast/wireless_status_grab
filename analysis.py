@@ -3,7 +3,7 @@ import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 
-connection = sqlite.connect('/home/samuel/wireless_data.db')
+connection = sqlite.connect('wireless_data.db')
 cursor = connection.cursor()
 
 check_for_table = "SELECT name FROM sqlite_master WHERE type='table' AND name='wireless_hosts';"
@@ -34,14 +34,27 @@ for each in selection:
 ### Plotting
 fig = plt.figure()
 plt.title('Hosts: Strength vs Time')
-plt.xlabel('Strength')
-plt.ylabel('Time')
-ax = plt.subplot(111)
+plt.xlabel('Time')
+plt.xticks(rotation='vertical')
+plt.ylabel('Strength')
+ax = plt.subplot(111, aspect=0.00008)
+ax.xaxis.set_major_locator(matplotlib.dates.HourLocator())
+ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%I (%H)')) # formatted 12 hour clock
+#ax.xaxis.set_minor_locator(months)
 
 for host in hosts:
-    y = [x[1] for x in by_host[host]]
-    x = [x[0] for x in by_host[host]]
+    y = [x[0] for x in by_host[host]]
+    x = [x[1] for x in by_host[host]]
 
-    ax.plot(x, y, label=str(host))
+    ax.plot(matplotlib.dates.num2date(matplotlib.dates.epoch2num(x)), y, label=str(host))
+    #fig.savefig('/home/samuel/Downloads/test_{}.png'.format(host), bbox_inches='tight', figsize=(8, 6), dpi=100)
+    #ax.cla()
 
-fig.savefig('out.png', bbox_inches='tight')
+ax.legend(
+  loc='upper center',
+  bbox_to_anchor=(0.5, -0.1),
+  fancybox = True,
+  ncol = 2
+)
+
+fig.savefig('/home/samuel/Downloads/test_all.svg', bbox_inches='tight', figsize=(10, 6), dpi=400)
