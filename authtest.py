@@ -1,4 +1,5 @@
 #! /usr/bin/python
+import os
 import requests
 from requests.auth import HTTPBasicAuth as auth
 import json
@@ -7,7 +8,8 @@ import time
 
 
 ### Router connection settings
-with open('settings.json') as f:
+filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'settings.json')
+with open(filepath) as f:
     # load from settings file
     settings = json.load(f)
 
@@ -72,3 +74,5 @@ probe = probe_router(url, myauth)
 
 cursor.executemany('insert into wireless_hosts values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', probe) 
 connection.commit()
+
+print('completed successfully')
