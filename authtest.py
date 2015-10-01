@@ -2,6 +2,7 @@ import requests
 from requests.auth import HTTPBasicAuth as auth
 import json
 import sqlite3 as sqlite
+import time
 
 
 ### Router connection settings
@@ -14,13 +15,22 @@ password = settings['password']
 url = settings['url']
 
 
-### Sqlite settings
+### Sqlite db setup
 connection = sqlite.connect('wireless_data.db')
 cursor = connection.cursor()
 
+check_for_table = "SELECT name FROM sqlite_master WHERE type='table' AND name='wireless_hosts';"
+if cursor.execute(check_for_table).fetchone() is None:
+    table_create = '''CREATE TABLE wireless_hosts
+                   (mac text, interface text, uptime text, tx_rate text, rx_rate text,
+                   signal integer, noise integer, snr integer, signal_strength integer,
+                   datetime integer);'''
+
+    cursor.execute(table_create)
+
 
 ### Functionality
-def probe_router(url, auth):
+def probe_router(url, auth, dic=False):
     req = requests.get(url, auth=myauth)
     status = req.status_code
     assert 200 <= status < 300
@@ -40,7 +50,14 @@ def probe_router(url, auth):
     active_wireless_raw = ugly_dict['active_wireless'][1:-1].split("','")
     
     keys = ['mac', 'interface', 'uptime', 'tx_rate', 'rx_rate', 'signal', 'noise', 'snr', 'signal_strength']
-    active_wireless = [tuple(active_wireless_raw[a:a+9]) for a in range(0, len(active_wireless_raw), 9)]
+
+    active_wireless = [active_wireless_raw[a:a+9] for a in range(0, len(active_wireless_raw), 9)]
+
+    # convert some stuff to int, add time
+    current_time = int(time.time())
+    active_wireless = map(lambda l: l[:5] + map(int, l[5:]) + [current_time], active_wireless)
+
+    if not dic: return active_wireless
     
     wireless_dicts = [dict(zip(keys, each)) for each in active_wireless]
 
@@ -50,5 +67,7 @@ def probe_router(url, auth):
 ### Tests
 myauth = auth(username, password)
 
-for a in probe_router(url, myauth):
-    print(a)
+probe = probe_router(url, myauth)
+
+cursor.executemany('insert into wireless_hosts values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', probe) 
+connection.commit()
