@@ -72,61 +72,70 @@ def wireless_hosts(_url, auth):
             }) for x in arps
         ])
 
-arp_table = wireless_hosts(hosts_url, myauth)
-
-macs = arp_table.keys()
-
 connection = sqlite.connect('/home/samuel/wireless_data.db')
+
+def check_for_table(_cursor, table_name):
+    ''' return True if table exists, false otherwise
+    '''
+    test = _cursor.execute(
+            """SELECT name FROM sqlite_master \
+            WHERE type='table' AND name=?;"""
+            , (table_name, )).fetchone()
+
+    return test is not None
+
 cursor = connection.cursor()
 
-check_for_table = "SELECT name FROM sqlite_master WHERE type='table' AND name='wireless_arp_table';"
-if cursor.execute(check_for_table).fetchone() is None:
-    table_create = '''CREATE TABLE wireless_arp_table
-                   (mac text primary key, hostname text, hostname_alias1 text, hostname_alias2 text,
-                   last_ip text, datetime integer);'''
 
-    cursor.execute(table_create)
+def check_update_hosts(cursor):
+    current_hosts_dict = wireless_hosts(hosts_url, myauth)
+    current_hosts = [mac for mac in current_hosts_dict]
 
-# check for existing hosts
-last_hosts_query = cursor.execute('SELECT * FROM wireless_arp_table').fetchall()
+    if not check_for_table(cursor, 'wireless_arp_table'):
+        table_create = '''CREATE TABLE wireless_arp_table
+                       (mac text primary key, hostname text, hostname_alias1 text, hostname_alias2 text,
+                       last_ip text, datetime integer);'''
+    
+        cursor.execute(table_create)
 
-last_hosts_dict = dict([
-        (str(x[0]), {
-            'hostname' : x[1],
-            'hostname_alias1' : x[2],
-            'hostname_alias2' : x[3],
-            'ip' : x[4],
-            'time' : x[5]
-            }) for x in last_hosts_query
-        ])
+    # check for existing hosts
+    last_hosts_query = cursor.execute('SELECT * FROM wireless_arp_table').fetchall()
 
-last_hosts = last_hosts_dict.keys()
+    headers = ['hostname', 'hostname_alias1', 'hostname_alias2', 'ip', 'time']
+    last_hosts_dict = dict([(str(row[0]), dict(zip(headers, map(str, row[1:])))) for row in last_hosts_query])
 
-# if they are the same, do nothing.  else update or add
+    last_hosts = last_hosts_dict.keys()
 
-ordered = []
-for mac in macs:
-    if mac not in last_hosts:
-        # check that they're different
-        deets = arp_table[mac]
-        ordered.append([mac, deets['hostname'], "", "", deets['ip'], deets['time']])
-    else:
-        previous = last_hosts_dict[mac]
-        current = arp_table[mac]
+    new_hosts = [host for host in current_hosts if host not in last_hosts]
+    changed_hosts = [
+            host for host in current_hosts
+            if host in last_hosts
+            and current_hosts_dict[host]['hostname'] != last_hosts_dict[host]['hostname']
+            ]
 
-        if not str(previous['hostname']) == str(current['hostname']):
-            ordered.append([
-                mac,
-                deets['hostname'],
-                previous['hostname'],
-                previous['hostname_alias1'],
-                deets['ip'],
-                deets['time']
-                ])
+    changes = []
+    for host in changed_hosts:
+        row = [host] + [last_hosts_dict[host][x] for x in headers]
+        row[3] = row[2] # shift alias 1 to alias 2
+        row[2] = row[1] # shift host to alias 1
+        row[1] = current_hosts_dict[host]['hostname']
+        changes.append(row)
 
-print("new hosts: {}".format(len(ordered)))
+    for host in new_hosts:
+        parts = current_hosts_dict[host]
+        row = [host, parts['hostname'], '', '', parts['ip'], parts['time']]
+        changes.append(row)
 
-# insert or update those rows that are new or modified
-cursor.executemany('INSERT OR REPLACE INTO wireless_arp_table (mac, hostname, hostname_alias1, hostname_alias2, last_ip, datetime) VALUES ( ?, ?, ?, ?, ?, ?);', ordered)
+    result = cursor.executemany(
+    '''INSERT OR REPLACE INTO wireless_arp_table
+    (mac, hostname, hostname_alias1, hostname_alias2, last_ip, datetime)
+    VALUES ( ?, ?, ?, ?, ?, ?);''', changes).fetchone()
+
+    return new_hosts, changed_hosts, result
+
+
+newh, chah, res = check_update_hosts(cursor)
+print("new hosts:     {}".format(len(newh)))
+print("changed hosts: {}".format(len(chah)))
 
 connection.commit()
