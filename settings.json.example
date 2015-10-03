@@ -3,5 +3,7 @@
 
   "password" : "",
 
-  "url"      : ""
+  "url"      : "",
+
+  "hosts_url" : ""
 }

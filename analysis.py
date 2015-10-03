@@ -3,7 +3,7 @@ import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 
-connection = sqlite.connect('wireless_data.db')
+connection = sqlite.connect('/home/samuel/wireless_data.db')
 cursor = connection.cursor()
 
 check_for_table = "SELECT name FROM sqlite_master WHERE type='table' AND name='wireless_hosts';"
@@ -37,7 +37,7 @@ plt.title('Hosts: Strength vs Time')
 plt.xlabel('Time')
 plt.xticks(rotation='vertical')
 plt.ylabel('Strength')
-ax = plt.subplot(111, aspect=0.00008)
+ax = plt.subplot(111)#, aspect=0.00008)
 ax.xaxis.set_major_locator(matplotlib.dates.HourLocator())
 ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%I (%H)')) # formatted 12 hour clock
 #ax.xaxis.set_minor_locator(months)
@@ -46,9 +46,11 @@ for host in hosts:
     y = [x[0] for x in by_host[host]]
     x = [x[1] for x in by_host[host]]
 
-    ax.plot(matplotlib.dates.num2date(matplotlib.dates.epoch2num(x)), y, label=str(host))
-    #fig.savefig('/home/samuel/Downloads/test_{}.png'.format(host), bbox_inches='tight', figsize=(8, 6), dpi=100)
-    #ax.cla()
+    line, = ax.plot(matplotlib.dates.num2date(matplotlib.dates.epoch2num(x)), y, 'o', label=str(host))
+    plt.setp(line, markersize = 3.0)
+    #if host == "FC:C2:DE:AA:B5:E9":
+    #  fig.savefig('/home/samuel/Downloads/test_{}.png'.format(host), bbox_inches='tight', figsize=(8, 6), dpi=100)
+    #  ax.cla()
 
 ax.legend(
   loc='upper center',

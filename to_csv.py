@@ -7,13 +7,13 @@ cursor = connection.cursor()
 check_for_table = "SELECT name FROM sqlite_master WHERE type='table' AND name='wireless_hosts';"
 assert cursor.execute(check_for_table).fetchone() is not None, 'table does not exist'
 
-all = cursor.execute('SELECT * FROM wireless_hosts').fetchall()
+_all = cursor.execute('SELECT * FROM wireless_hosts').fetchall()
 
-hosts = set([x[0] for x in all])
+hosts = set([x[0] for x in _all])
 
 print("unique hosts: {}".format(len(hosts)))
 
-selection = [(x[0], x[8], x[9]) for x in all]
+selection = [(x[0], x[8], x[9]) for x in _all]
 
 print("host instances: {}".format(len(selection)))
 
@@ -31,22 +31,45 @@ for each in selection:
 mess = []
 hosts = list(hosts)
 # get max len
-lens = []
-for i, host in enumerate(hosts):
-    lens.append(len(by_host[host]))
-
+#lens = []
+#for i, host in enumerate(hosts):
+#    lens.append(len(by_host[host]))
+#mess = []
+#mess.append([hosts[int(i/2)] if i%2==0 else "" for i in range(len(hosts)*2)])
+#for row_index in range(max(lens)):
+#    inst = []
+#    for host in hosts:
+#        if row_index < len(by_host[host]):
+#            inst = inst + list(by_host[host][row_index])
+#        else:
+#            inst = inst + ["", ""]
+#    mess.append(inst)
 
 mess = []
-mess.append([hosts[int(i/2)] if i%2==0 else "" for i in range(len(hosts)*2)])
-for row_index in range(max(lens)):
-    inst = []
-    for host in hosts:
-        all_of_host = by_host[host]
-        if row_index < len(all_of_host):
-            inst = inst + list(all_of_host[row_index])
-        else:
-            inst = inst + ["", ""]
+mess.append(['time'] + hosts)
+
+by_host_by_time = {}
+for host in hosts:
+    by_host_by_time[host] = dict([(a, b) for b, a in by_host[host]])
+
+# get min/max time
+mi = 10E10
+ma = 0
+for host in hosts:
+    both = [time for strength, time in by_host[host]]
+    if min(both) < mi: mi = min(both)
+    if max(both) > mi: ma = max(both)
+
+for time in range(mi, ma):
+    row = ["" for i in range(len(mess[0]) + 1)]
+    row[0] = time
+    for i, host in enumerate(hosts):
+        row[i+1] = by_host_by_time[host][time] if time in by_host_by_time[host] else ""
+
+    if not all([x == '' for x in row[1:]]):
+        mess.append(row)
 
 with open('/home/samuel/Downloads/rows.csv', 'wb') as f:
+    print(len(mess))
     writer = csv.writer(f)
     writer.writerows(mess)
