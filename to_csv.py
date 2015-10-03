@@ -1,5 +1,6 @@
 import sqlite3 as sqlite
 import csv
+import datetime
 
 connection = sqlite.connect('/home/samuel/wireless_data.db')
 cursor = connection.cursor()
@@ -69,7 +70,21 @@ for time in range(mi, ma):
     if not all([x == '' for x in row[1:]]):
         mess.append(row)
 
-with open('/home/samuel/Downloads/rows.csv', 'wb') as f:
-    print(len(mess))
+_all = cursor.execute('SELECT * FROM wireless_arp_table').fetchall()
+convert = dict([map(str, x[0:2]) for x in _all])
+
+macs = mess[0][1:]
+
+for i, x in enumerate(macs):
+    if x in convert:
+        mess[0][i+1] = convert[x]
+
+for row in mess[1:]:
+    row[0] = datetime.datetime.fromtimestamp(row[0]).strftime('%Y-%m-%d %H:%M:%S.%f')
+
+
+filepath = '/home/samuel/Downloads/rows.csv'
+print("writing to '{}'".format(filepath))
+with open(filepath, 'wb') as f:
     writer = csv.writer(f)
     writer.writerows(mess)
