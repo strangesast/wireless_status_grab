@@ -1,9 +1,11 @@
 import os
 import json
+import csv
 import requests
 from requests.auth import HTTPBasicAuth as auth
 import sqlite3 as sqlite
 import time
+import datetime
 
 filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'settings.json')
 with open(filepath) as f:
@@ -138,5 +140,85 @@ def check_update_hosts(cursor):
 newh, chah, res = check_update_hosts(cursor)
 print("new hosts:     {}".format(len(newh)))
 print("changed hosts: {}".format(len(chah)))
-
 connection.commit()
+
+
+query = cursor.execute('SELECT * FROM wireless_arp_table').fetchall()
+
+headers = ['hostname', 'hostname_alias1', 'hostname_alias2', 'ip', 'time']
+last_hosts_dict = dict([(str(row[0]), dict(zip(headers, map(str, row[1:])))) for row in query])
+
+
+by_mac = {}
+query = cursor.execute('SELECT * FROM wireless_hosts').fetchall()
+
+for inst in query:
+    stringed = map(str, inst[0:5]) + list(inst[5:])
+    mac = stringed[0]
+    if mac in last_hosts_dict:
+        name = last_hosts_dict[mac]['hostname']
+        hostname = "{} ({})".format(mac, name)
+    else:
+        hostname = mac
+
+    if hostname not in by_mac:
+        by_mac[hostname] = [stringed[1:]]
+
+    else:
+        by_mac[hostname].append(stringed[1:])
+
+broken_by_mac = {}
+
+for hostname in by_mac:
+    sections = []
+    current = []
+    instances = by_mac[hostname]
+    for i in range(len(instances)-1):
+        strength, _time = instances[i][7:]
+        if abs(_time - instances[i+1][7:][1]) < 60*10:
+            current.append((_time, strength))
+        else:
+            sections.append(current)
+            current = [(_time, strength)]
+
+    broken_by_mac[hostname] = sections
+    
+
+out = {}
+for host in broken_by_mac:
+    print("HOST: {}".format(host))
+    sec = []
+    for section in broken_by_mac[host]:
+        if len(section) == 0: continue
+        justs = [strength for _time, strength in section]
+        justt = [_time for _time, strength in section]
+        avg = sum(justs)/len(justs)
+        
+        diff = max(justt) - min(justt)
+
+        sec.append([(_time, avg) for _time, strength in section])
+
+        #m, s = divmod(diff, 60)
+        #h, m = divmod(m, 60)
+
+        #print("{}:{}:{}".format(h, m, s), avg)
+
+    out[host] = sec 
+
+keys = out.keys()
+test = out["68:AE:20:39:C4:5C (JonathansiPhone)"]
+
+csvout = []
+csvout.append(['time', 'strength'])
+for section in test:
+    for inst in section:
+        _time, strength = inst
+        _time = datetime.datetime.fromtimestamp(_time).strftime('%Y-%m-%d %H:%M:%S')
+        csvout.append((_time, strength))
+
+
+
+filepath = "/home/samuel/Downloads/broken.csv"
+with open(filepath, 'wb') as f:
+    writer = csv.writer(f)
+    writer.writerows(csvout)
