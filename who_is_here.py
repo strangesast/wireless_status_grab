@@ -116,10 +116,11 @@ def check_update_hosts(cursor):
     changes = []
     for host in changed_hosts:
         row = [host] + [last_hosts_dict[host][x] for x in headers]
-        row[3] = row[2] # shift alias 1 to alias 2
-        row[2] = row[1] # shift host to alias 1
-        row[1] = current_hosts_dict[host]['hostname']
-        changes.append(row)
+        if not (row[1] != "" and current_hosts_dict[host]['hostname'] == "*"):
+          row[3] = row[2] # shift alias 1 to alias 2
+          row[2] = row[1] # shift host to alias 1
+          row[1] = current_hosts_dict[host]['hostname']
+          changes.append(row)
 
     for host in new_hosts:
         parts = current_hosts_dict[host]
