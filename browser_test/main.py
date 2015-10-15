@@ -47,7 +47,6 @@ def get_records_by_mac(mac, timerange=None):
     query = "select * from wireless_hosts where mac=?;"
 
     result = cursor.execute(query, (clean_mac(mac), )).fetchall()
-    print(result[0])
     if result is not None:
         records = [dict(zip(wireless_hosts_header, map(str, host))) for host in result]
     else:
@@ -82,4 +81,4 @@ def recalcuate(mac):
 
 
 application = default_app()
-application.run(debug=True)
+application.run(host='0.0.0.0', port=3000, debug=True)
