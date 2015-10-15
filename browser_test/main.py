@@ -86,7 +86,7 @@ def simplify_records(records, max_gap):
         current_strength = float(current_record['strength'])
 
         diff = current_time - last_time
-        if diff < max_gap:
+        if diff < max_gap and i!=record_count-1:
             current_piece.append((current_time, current_strength))
         else:
             strengths = [x[1] for x in current_piece] 
