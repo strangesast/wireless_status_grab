@@ -81,6 +81,11 @@ var seconds_to_minutes_hours = function(seconds) {
 }
 
 
+var add_zeros = function(num) {
+  var size = 2
+  var str = "00000000000" + num;
+  return str.substr(str.length-size);
+}
 var date_to_string = function(date) {
   var cday = date.getDate();
   var cmonth = date.getMonth() + 1;
@@ -88,8 +93,12 @@ var date_to_string = function(date) {
   var chour = date.getHours();
   var cmin = date.getMinutes();
   var csec = date.getSeconds();
-  return cmonth + "/" + cday + "/" + cyear + " " + chour + ':' + cmin + ":" + csec;
+  var daystring = [cmonth, cday, cyear].map(add_zeros).join('/');
+  var timestring = [chour, cmin, csec].map(add_zeros).join(':');
+
+  return daystring + " " + timestring;
 }
+
 
 var summary = document.getElementById('summary');
 

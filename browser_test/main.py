@@ -65,6 +65,9 @@ def simplify_records(records, max_gap):
     """ records (array) record array of record objects,
         max_gap (int) max time in seconds between records
     """
+    if len(records) < 1:
+        return [];
+
     record_count = len(records)
     pieces = []
     current_piece = []
