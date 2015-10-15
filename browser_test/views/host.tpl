@@ -1,21 +1,23 @@
 <html>
+  <head>
+    <style>
+      .info {
+      
+      }
+    </style>
+  </head>
   <body>
     <h1>
       <small>Summary for </small>
       {{host['host']['name'] if not host['host']['name'] in ['*', ''] else host['host']['mac']}}</h1>
-    % if len(host['records']) > 0:
-        <table>
-          <tr>
-            <th>Time</th>
-            <th>Strength</th>
-          </tr>
-          % for host in host['records']:
-          <tr>
-            <td>{{host['time']}}</td>
-            <td>{{host['strength']}}</td>
-          </tr>
-          % end
-        </table>
-    % end
+    <div id="summary" class="info">
+      <p>Record Count: {{host['record_count']}}</p>
+      <p>Sections: {{host['sections']}}</p>
+      <!--<canvas id="simplified_graph"></canvas>-->
+    </div>
+    <script>
+    document.MAC_SELF = "{{host['host']['mac']}}";
+    </script>
+    <script src="/static/js/host_analysis.js"></script>
   </body>
 </html>
