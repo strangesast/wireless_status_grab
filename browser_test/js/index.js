@@ -62,7 +62,7 @@ var update_last_active = function() {
     var row = rows[i];
     var mac = row.getAttribute('mac');
     var ladom = row.querySelector('.last_active');
-    makeRequest('/active/' + mac, 'POST', null).then((function(obj) {
+    var prom = makeRequest('/active/' + mac, 'POST', null).then((function(obj) {
       return function(response) {
         if(!isNaN(response)) {
           var d = convert_utc_epoch_to_date(response);
@@ -76,8 +76,15 @@ var update_last_active = function() {
         }
       }
     })(ladom));
+    queue.push(prom);
   }
+  return Promise.all(queue);
 }
 
 update_last_active();
-setInterval(update_last_active, 8000);
+var updateint = setInterval(function() {
+  update_last_active().catch(function() {
+    console.log("failed");
+    clearInterval(updateint);
+  });
+}, 8000);
