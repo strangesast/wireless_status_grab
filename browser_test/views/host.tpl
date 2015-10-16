@@ -1,8 +1,8 @@
 <html>
   <head>
     <style>
-      .info {
-      
+      [piece-index] {
+        cursor: pointer;
       }
     </style>
   </head>
@@ -13,7 +13,8 @@
     <div id="summary" class="info">
       <p>Record Count: {{host['record_count']}}</p>
       <p>Sections: {{host['sections']}}</p>
-      <!--<canvas id="simplified_graph"></canvas>-->
+      <p id="table_placeholder">Loading...</p>
+      <canvas id="simplified_graph"></canvas>
     </div>
     <script>
     document.MAC_SELF = "{{host['host']['mac']}}";

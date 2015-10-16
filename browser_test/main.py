@@ -10,7 +10,7 @@ root_parent = os.path.dirname(root)
 
 sqlite_db_name = 'wireless_data.db'
 sqlite_db_pathname = os.path.join(root_parent, sqlite_db_name)
-
+sqlite_db_pathname = '/home/samuel/wireless_data.db'
 #notice that end comma
 print("connecting to '{}'...".format(sqlite_db_pathname)),
 
@@ -86,9 +86,22 @@ def simplify_records(records, max_gap):
         current_strength = float(current_record['strength'])
 
         diff = current_time - last_time
-        if diff < max_gap and i!=record_count-1:
+        if diff < max_gap:
             current_piece.append((current_time, current_strength))
-        else:
+        elif i == record_count - 1:
+            strengths = [x[1] for x in current_piece] 
+            times = [x[0] for x in current_piece] 
+
+            summary = {
+                    'max_time' : max(times),
+                    'min_time' : min(times),
+                    'average_strength' : sum(strengths)/len(strengths),
+                    'pieces' : current_piece}
+
+            pieces.append(summary)
+            current_piece = []
+
+        if diff >= max_gap or i == record_count - 1:
             strengths = [x[1] for x in current_piece] 
             times = [x[0] for x in current_piece] 
 
