@@ -30,6 +30,18 @@ var makeRequest = function(url, method, data) {
   })
 }
 
+var convert_utc_epoch_to_date = function(seconds_epoch) {
+  var d = new Date(0);
+  d.setUTCSeconds(seconds_epoch);
+  return d
+}
+
+var add_zeros = function(num) {
+  var size = 2
+  var str = "00000000000" + num;
+  return str.substr(str.length-size);
+}
+
 var date_to_string = function(date) {
   var cday = date.getDate();
   var cmonth = date.getMonth() + 1;
@@ -45,13 +57,20 @@ var date_to_string = function(date) {
 
 var update_last_active = function() {
   var rows = document.getElementById('mactable').querySelectorAll('[mac]');
+  queue = [];
   for(var i=0; i<rows.length; i++) {
     var row = rows[i];
+    var mac = row.getAttribute('mac');
     var ladom = row.querySelector('.last_active');
-    // HERE
-    ladom.textContent = "toast"
+    makeRequest('/active/' + mac, 'POST', null).then((function(obj) {
+      return function(response) {
+        if(!isNaN(response)) {
+          var d = convert_utc_epoch_to_date(response);
+          obj.textContent = date_to_string(d);
+        }
+      }
+    })(ladom));
   }
-  //var prom = makeRequest('/active/' + mac, 'POST', JSON.stringify(params));
 }
 
 update_last_active()
