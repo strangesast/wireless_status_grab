@@ -1,4 +1,11 @@
 <html>
+  <head>
+  <style>
+    .recent::after {
+      content: "  ⌂";
+    }
+  </style>
+  </head>
   <body>
     <h2>Client List</h2>
     <div>

@@ -66,11 +66,18 @@ var update_last_active = function() {
       return function(response) {
         if(!isNaN(response)) {
           var d = convert_utc_epoch_to_date(response);
+          var diff = Math.abs(new Date() - d);
           obj.textContent = date_to_string(d);
+          if (diff < 1000*60*15) {
+            obj.classList.add('recent');
+          } else {
+            obj.classList.remove('recent');
+          }
         }
       }
     })(ladom));
   }
 }
 
-update_last_active()
+update_last_active();
+setInterval(update_last_active, 8000);
