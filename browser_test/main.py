@@ -30,6 +30,11 @@ def clean_mac(unclean_mac):
     mac = re.sub(r'[^0-9A-Za-z:]', '', unclean_mac)
     return mac
 
+def get_unique_macs():
+    query = 'select distinct mac from wireless_hosts;'
+    result = cursor.execute(query).fetchall()
+    clean = [str(x[0]) for x in result]
+    return clean
 
 def get_host_table():
     query = "select * from wireless_arp_table;"
@@ -45,7 +50,10 @@ def get_host_by_mac(mac):
     host = cursor.execute(query, (clean_mac(mac), )).fetchone()
     if host is not None:
         host = dict(zip(arp_table_header, map(str, host)))
-    return host;
+    else:
+        host = dict(zip(arp_table_header, ['unknown' for x in range(len(arp_table_header))]))
+        host['mac'] = mac
+    return host
 
 
 def get_records_by_mac(mac, timerange=None):
@@ -89,8 +97,8 @@ def simplify_records(records, max_gap):
         if diff < max_gap:
             current_piece.append((current_time, current_strength))
         elif i == record_count - 1:
-            strengths = [x[1] for x in current_piece] 
-            times = [x[0] for x in current_piece] 
+            strengths = [x[1] for x in current_piece]
+            times = [x[0] for x in current_piece]
 
             summary = {
                     'max_time' : max(times),
@@ -102,8 +110,8 @@ def simplify_records(records, max_gap):
             current_piece = []
 
         if diff >= max_gap or i == record_count - 1:
-            strengths = [x[1] for x in current_piece] 
-            times = [x[0] for x in current_piece] 
+            strengths = [x[1] for x in current_piece]
+            times = [x[0] for x in current_piece]
 
             summary = {
                     'max_time' : max(times),
@@ -123,7 +131,12 @@ def simplify_records(records, max_gap):
 
 @route('/')
 def hello_world():
+    uniquemacs = get_unique_macs()
+
     hosts = get_host_table()
+    macs = [x['mac'] for x in hosts]
+    hosts += [{'mac' : mac, 'name' : 'unknown'} for mac in uniquemacs if mac not in macs]
+
     return template('index', host_list=hosts)
 
 
@@ -132,6 +145,8 @@ def recalcuate(mac):
     mac = clean_mac(mac)
     if not mac == '':
         records = get_records_by_mac(mac)
+        if len(records) < 1:
+            return "no records for this mac"
         simplified = simplify_records(records, 60*15)
         hostname = get_host_by_mac(mac)
         host_data = {'host' : hostname, 'record_count' : len(records), 'sections' : len(simplified)}
