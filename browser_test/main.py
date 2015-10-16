@@ -2,6 +2,7 @@ from __future__ import division
 import os
 import re
 import json
+import time
 import sqlite3 as sqlite
 from bottle import default_app, route, static_file, request, template
 
@@ -30,6 +31,11 @@ def clean_mac(unclean_mac):
     mac = re.sub(r'[^0-9A-Za-z:]', '', unclean_mac)
     return mac
 
+def last_active(mac):
+    query = 'select max(datetime) from wireless_hosts where mac=?'
+    result = cursor.execute(query, (mac, )).fetchone()
+    return result[0]
+
 def get_unique_macs():
     query = 'select distinct mac from wireless_hosts;'
     result = cursor.execute(query).fetchall()
@@ -41,9 +47,7 @@ def get_host_table():
     cursor.execute(query)
     hosts_raw = cursor.fetchall()
     hosts = [dict(zip(arp_table_header, map(str, host))) for host in hosts_raw]
-
     return hosts
-
 
 def get_host_by_mac(mac):
     query = "select * from wireless_arp_table where mac=?;"
@@ -57,15 +61,12 @@ def get_host_by_mac(mac):
 
 
 def get_records_by_mac(mac, timerange=None):
-
     query = "select * from wireless_hosts where mac=?;"
-
     result = cursor.execute(query, (clean_mac(mac), )).fetchall()
     if result is not None:
         records = [dict(zip(wireless_hosts_header, map(str, host))) for host in result]
     else:
         records = None
-
     return records
 
 
@@ -109,7 +110,7 @@ def simplify_records(records, max_gap):
             pieces.append(summary)
             current_piece = []
 
-        if diff >= max_gap or i == record_count - 1:
+        if (diff >= max_gap or i == record_count - 1) and current_piece != []:
             strengths = [x[1] for x in current_piece]
             times = [x[0] for x in current_piece]
 
@@ -132,11 +133,9 @@ def simplify_records(records, max_gap):
 @route('/')
 def hello_world():
     uniquemacs = get_unique_macs()
-
     hosts = get_host_table()
     macs = [x['mac'] for x in hosts]
     hosts += [{'mac' : mac, 'name' : 'unknown'} for mac in uniquemacs if mac not in macs]
-
     return template('index', host_list=hosts)
 
 
@@ -172,6 +171,7 @@ def post_host(mac):
         records = get_records_by_mac(mac)
 
         response = {'records' : records}
+        response = {} # big
 
         if simplified:
             simplified = simplify_records(records, 60*15)
@@ -179,6 +179,16 @@ def post_host(mac):
 
 
         return json.dumps(response)
+    else:
+        return json.dumps({'error' : "bad mac"})
+
+
+@route('/active/<mac>', method="POST")
+@route('/active/<mac>', method="GET")
+def post_host(mac):
+    mac = clean_mac(mac)
+    if not mac == '':
+        return json.dumps(last_active(mac))
     else:
         return json.dumps({'error' : "bad mac"})
 

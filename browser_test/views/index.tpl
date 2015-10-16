@@ -4,15 +4,17 @@
     <div>
     <p>Host count: {{len(host_list)}}</p>
     % if len(host_list) > 0:
-      <table>
+      <table id="mactable">
         <tr>
           <th>Hostname</th>
           <th>MAC</th>
+          <th>Last Active</th>
         </tr>
         % for host in host_list:
-        <tr>
+        <tr mac="{{host['mac']}}">
           <td>{{host['name']}}</td>
           <td><a href="{{'/host/{}'.format(host['mac'])}}">{{host['mac']}}</a></td>
+          <td class="last_active"></td>
         </tr>
         % end
       </table>
