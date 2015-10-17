@@ -1,5 +1,3 @@
-console.log("toast");
-
 var makeRequest = function(url, method, data) {
   return new Promise(function(resolve, reject) {
     var request = new XMLHttpRequest();
@@ -130,8 +128,6 @@ var chart_points = function(points) {
   maxy = Math.max.apply(this, y);
   miny = Math.min.apply(this, y);
   dify = maxy - miny;
-  console.log(maxx, minx, maxy, miny)
-  console.log(difx, dify);
 
   ctx = canvas_elem.getContext('2d');
   ctx.clearRect(0, 0, canwidth, canheight);
@@ -144,10 +140,10 @@ var chart_points = function(points) {
   }
   ctx.stroke();
 
-  console.log([x, y])
 }
 
 var summary = document.getElementById('summary');
+var record_container = document.getElementById('record-container');
 
 var add_hover_listener = function(elem) {
   var index = elem.getAttribute('piece-index');
@@ -181,16 +177,16 @@ if (document.MAC_SELF) {
     var table = build_table(header, simple_rows);
     return table;
   }).then(function(table) {
-    var tph = summary.querySelector('#table_placeholder')
+    var tph = record_container.querySelector('#table_placeholder')
     if(tph) {
       tph.parentNode.replaceChild(table, tph);
     } else {
-      summary.appendChild(table);
+      record_container.appendChild(table);
     }
   }).then(function() {
     var keys = Object.keys(by_mac);
     var simple = by_mac[document.MAC_SELF]['simplified'];
-    var rows = summary.querySelectorAll('[piece-index]');
+    var rows = record_container.querySelectorAll('[piece-index]');
     for(var i=0; i<rows.length; i++) {
        add_hover_listener(rows[i]);
     }

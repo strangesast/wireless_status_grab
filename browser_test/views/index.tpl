@@ -4,12 +4,21 @@
     .recent::after {
       content: "  ⌂";
     }
+    tr:nth-child(odd) {
+      background: lightgrey;
+    }
+    tr > td[
   </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   </head>
   <body>
-    <h2>Client List</h2>
+    <h1>Client List</h1>
+    <div class="summary">
+      <p>Host count: {{len(host_list)}}</p>
+      <p>Active: {{len(active_macs)}}</p>
+    </div>
     <div>
-    <p>Host count: {{len(host_list)}}</p>
     % if len(host_list) > 0:
       <table id="mactable">
         <tr>
@@ -21,7 +30,9 @@
         <tr mac="{{host['mac']}}">
           <td>{{host['name']}}</td>
           <td><a href="{{'/host/{}'.format(host['mac'])}}">{{host['mac']}}</a></td>
-          <td class="last_active"></td>
+          <td class="last_active">
+          {{host['last_active']}}
+          </td>
         </tr>
         % end
       </table>

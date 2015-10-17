@@ -3,6 +3,7 @@ import os
 import re
 import json
 import time
+import datetime
 import sqlite3 as sqlite
 from bottle import default_app, route, static_file, request, template
 
@@ -36,6 +37,18 @@ def last_active(mac):
     result = cursor.execute(query, (mac, )).fetchone()
     return result[0]
 
+def get_all_last_active(threshold=None):
+    """ threshold (int) how many seconds back should be considered "active"
+    """
+    if threshold is not None:
+        query = 'select mac, datetime from wireless_hosts where datetime > ? group by mac'
+        result = cursor.execute(query, (str(time.time() - threshold), )).fetchall()
+    else:
+        query = 'select mac, max(datetime) from wireless_hosts group by mac;'
+        result = cursor.execute(query).fetchall()
+    clean = [(str(x[0]), int(x[1])) for x in result]
+    return clean
+
 def get_unique_macs():
     query = 'select distinct mac from wireless_hosts;'
     result = cursor.execute(query).fetchall()
@@ -68,6 +81,9 @@ def get_records_by_mac(mac, timerange=None):
     else:
         records = None
     return records
+
+def date_to_string(date):
+    return date.strftime('%m/%d/%y %H:%M:%S')
 
 
 def simplify_records(records, max_gap):
@@ -133,10 +149,22 @@ def simplify_records(records, max_gap):
 @route('/')
 def hello_world():
     uniquemacs = get_unique_macs()
+    actives = get_all_last_active(None)
+    actives_by_mac = dict(actives)
     hosts = get_host_table()
     macs = [x['mac'] for x in hosts]
     hosts += [{'mac' : mac, 'name' : 'unknown'} for mac in uniquemacs if mac not in macs]
-    return template('index', host_list=hosts)
+    recent_actives = get_all_last_active(600)
+    print(recent_actives)
+    # last active stuff
+    for host in hosts:
+        if host['mac'] in actives_by_mac:
+            last_active = actives_by_mac[host['mac']]
+            host['last_active'] = date_to_string(datetime.datetime.fromtimestamp(last_active))
+        else:
+            host['last_active'] = 'unknown'
+
+    return template('index', host_list=hosts, active_macs=recent_actives)
 
 
 @route('/host/<mac>')
@@ -146,17 +174,16 @@ def recalcuate(mac):
         records = get_records_by_mac(mac)
         if len(records) < 1:
             return "no records for this mac"
-        simplified = simplify_records(records, 60*15)
+        simplified = simplify_records(records, 60*10)
         hostname = get_host_by_mac(mac)
         host_data = {'host' : hostname, 'record_count' : len(records), 'sections' : len(simplified)}
         return template('host', host=host_data)
-
     else:
         return "bad mac!"
 
 
 @route('/host/<mac>', method="POST")
-def post_host(mac):
+def host_summary(mac):
     body_raw = request.body.read()#.get('params'))
     try:
         body = json.loads(body_raw)
@@ -183,9 +210,17 @@ def post_host(mac):
         return json.dumps({'error' : "bad mac"})
 
 
+@route('/active', method="POST")
+@route('/active', method="GET")
+def active_all():
+    actives = get_all_last_active(600)
+    by_mac = dict(actives)
+    return json.dumps(by_mac)
+
+
 @route('/active/<mac>', method="POST")
 @route('/active/<mac>', method="GET")
-def post_host(mac):
+def active_host(mac):
     mac = clean_mac(mac)
     if not mac == '':
         return json.dumps(last_active(mac))

@@ -57,34 +57,30 @@ var date_to_string = function(date) {
 
 var update_last_active = function() {
   var rows = document.getElementById('mactable').querySelectorAll('[mac]');
-  queue = [];
-  for(var i=0; i<rows.length; i++) {
-    var row = rows[i];
-    var mac = row.getAttribute('mac');
-    var ladom = row.querySelector('.last_active');
-    var prom = makeRequest('/active/' + mac, 'POST', null).then((function(obj) {
-      return function(response) {
-        if(!isNaN(response)) {
-          var d = convert_utc_epoch_to_date(response);
-          var diff = Math.abs(new Date() - d);
-          obj.textContent = date_to_string(d);
-          if (diff < 1000*60*15) {
-            obj.classList.add('recent');
-          } else {
-            obj.classList.remove('recent');
-          }
-        }
+  makeRequest('/active', 'GET', null).then(function(active_macs) {
+    for(var i=0; i<rows.length; i++) {
+      var row = rows[i];
+      var mac = row.getAttribute('mac');
+      var ladom = row.querySelector('.last_active');
+      if (mac in active_macs) {
+        var datetime = convert_utc_epoch_to_date(active_macs[mac]);
+        ladom.textContent = date_to_string(datetime);
+        ladom.classList.add('recent');
+      } else {
+        ladom.classList.remove('recent');
       }
-    })(ladom));
-    queue.push(prom);
-  }
-  return Promise.all(queue);
+    }
+  });
 }
 
 update_last_active();
 var updateint = setInterval(function() {
-  update_last_active().catch(function() {
+  Promise.resolve(function() {
+    // initiate loading symbol
+  }).then(update_last_active).catch(function() {
     console.log("failed");
     clearInterval(updateint);
+  }).then(function() {
+    // reset loading symbol
   });
-}, 8000);
+}, 1000*60*2);
