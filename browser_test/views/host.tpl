@@ -31,7 +31,7 @@
         <p>Sections: {{host['sections']}}</p>
       </div>
       <div id="record-container">
-        <p id="table_placeholder">Loading...</p>
+        <progress id="table_placeholder" max="100" value="0">Loading...</progress>
       </div>
       <div class="graph">
         <canvas id="simplified_graph"></canvas>

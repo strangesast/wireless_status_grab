@@ -1,4 +1,4 @@
-var makeRequest = function(url, method, data) {
+var makeRequest = function(url, method, data, progress_listener) {
   return new Promise(function(resolve, reject) {
     var request = new XMLHttpRequest();
     request.open(method, url, true);
@@ -22,6 +22,7 @@ var makeRequest = function(url, method, data) {
     request.onerror = function() {
       reject("request failed")
     }
+    request.addEventListener("progress", progress_listener);
     if (data) {
       request.send(data)
     } else {
@@ -30,11 +31,12 @@ var makeRequest = function(url, method, data) {
   })
 }
 
+
 var get_time_strength_data = function(mac, range) {
   // get a simplified version
   var params = {'params' : ['simplified']}
-  var prom = makeRequest('/host/' + mac, 'POST', JSON.stringify(params));
-  return prom
+  var prom = makeRequest('/host/' + mac, 'POST', JSON.stringify(params), progress_func);
+  return prom;
 }
 
 var build_table = function(header, rows) {
@@ -144,11 +146,20 @@ var chart_points = function(points) {
 
 var summary = document.getElementById('summary');
 var record_container = document.getElementById('record-container');
+var tph = record_container.querySelector('#table_placeholder')
+
+var progress_func = function(e) {
+  if (e.lengthComputable) {
+    tph.setAttribute("value", e.loaded/e.total * 100);
+  }
+}
+
 
 var add_hover_listener = function(elem) {
   var index = elem.getAttribute('piece-index');
   elem.addEventListener('mouseover', function() {chart_points(by_mac[document.MAC_SELF]['simplified'][index]['pieces']); });
 }
+
 
 var by_mac = {}
 if (document.MAC_SELF) {
@@ -177,7 +188,6 @@ if (document.MAC_SELF) {
     var table = build_table(header, simple_rows);
     return table;
   }).then(function(table) {
-    var tph = record_container.querySelector('#table_placeholder')
     if(tph) {
       tph.parentNode.replaceChild(table, tph);
     } else {

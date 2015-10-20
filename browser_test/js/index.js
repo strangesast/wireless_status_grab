@@ -1,4 +1,4 @@
-var makeRequest = function(url, method, data) {
+var makeRequest = function(url, method, data, progress_listener) {
   return new Promise(function(resolve, reject) {
     var request = new XMLHttpRequest();
     request.open(method, url, true);
@@ -22,6 +22,7 @@ var makeRequest = function(url, method, data) {
     request.onerror = function() {
       reject("request failed")
     }
+    request.addEventListener("progress", progress_listener);
     if (data) {
       request.send(data)
     } else {
@@ -57,7 +58,7 @@ var date_to_string = function(date) {
 
 var update_last_active = function() {
   var rows = document.getElementById('mactable').querySelectorAll('[mac]');
-  makeRequest('/active', 'GET', null).then(function(active_macs) {
+  makeRequest('/active', 'GET', null, null).then(function(active_macs) {
     for(var i=0; i<rows.length; i++) {
       var row = rows[i];
       var mac = row.getAttribute('mac');
