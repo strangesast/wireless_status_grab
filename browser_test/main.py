@@ -164,6 +164,7 @@ def hello_world():
         else:
             host['last_active'] = 'unknown'
 
+    hosts = sorted(hosts, key=lambda x: x['last_active'], reverse=True)
     return template('index', host_list=hosts, active_macs=recent_actives)
 
 
