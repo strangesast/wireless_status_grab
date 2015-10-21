@@ -41,13 +41,18 @@ def get_all_last_active(threshold=None):
     """ threshold (int) how many seconds back should be considered "active"
     """
     if threshold is not None:
-        query = 'select mac, datetime from wireless_hosts where datetime > ? group by mac'
-        result = cursor.execute(query, (str(time.time() - threshold), )).fetchall()
+        query = 'select mac, datetime from wireless_hosts where datetime >= ? and datetime <= ? group by mac'
+        result = cursor.execute(query, map(str, threshold)).fetchall()
     else:
         query = 'select mac, max(datetime) from wireless_hosts group by mac;'
         result = cursor.execute(query).fetchall()
     clean = [(str(x[0]), int(x[1])) for x in result]
     return clean
+
+def get_records_in_range(timerange, mac):
+    query = 'select * from wireless_hosts where datetime >= ? and datetime <= ? and mac = ?'
+    result = cursor.execute(query, map(str, timerange + [mac])).fetchall()
+    return result
 
 def get_unique_macs():
     query = 'select distinct mac from wireless_hosts;'
@@ -72,7 +77,6 @@ def get_host_by_mac(mac):
         host['mac'] = mac
     return host
 
-
 def get_records_by_mac(mac, timerange=None):
     query = "select * from wireless_hosts where mac=?;"
     result = cursor.execute(query, (clean_mac(mac), )).fetchall()
@@ -84,7 +88,6 @@ def get_records_by_mac(mac, timerange=None):
 
 def date_to_string(date):
     return date.strftime('%m/%d/%y %H:%M:%S')
-
 
 def simplify_records(records, max_gap):
     """ records (array) record array of record objects,
@@ -154,7 +157,7 @@ def hello_world():
     hosts = get_host_table()
     macs = [x['mac'] for x in hosts]
     hosts += [{'mac' : mac, 'name' : 'unknown'} for mac in uniquemacs if mac not in macs]
-    recent_actives = get_all_last_active(600)
+    recent_actives = get_all_last_active((time.time() - 600, time.time()))
     print(recent_actives)
     # last active stuff
     for host in hosts:
@@ -166,6 +169,44 @@ def hello_world():
 
     hosts = sorted(hosts, key=lambda x: x['last_active'], reverse=True)
     return template('index', host_list=hosts, active_macs=recent_actives)
+
+
+@route('/time_slider', method="GET")
+def time_slider():
+    return template('time_slider')
+
+@route('/records_in_range', method="POST")
+def records_in_range():
+    #return template('time_slider')
+    body_raw = request.body.read()
+    try:
+        body_dict = json.loads(body_raw)
+    except:
+        body_dict = {}
+    body_keys = body_dict.keys()
+    query_dict = request.query
+    query_params = query_dict.keys()
+    t1 = 0
+    t2 = int(time.time())
+    try:
+        if 't1' in query_params:
+            t1 = int(query_dict['t1'])
+        if 't2' in query_params:
+            t2 = int(query_dict['t2'])
+        if 't1' in body_keys:
+            t1 = int(body_dict['t1'])
+        if 't2' in body_keys:
+            t2 = int(body_dict['t2'])
+    except:
+        return "malformed date"
+
+    macs_in_range = [x[0] for x in get_all_last_active((t1, t2))] # (mac, last_active)
+    response_dict = {}
+    for mac in macs_in_range:
+        records = get_records_in_range([t1, t2], mac)
+        response_dict[mac] = records
+
+    return json.dumps(response_dict)
 
 
 @route('/host/<mac>')
@@ -214,7 +255,7 @@ def host_summary(mac):
 @route('/active', method="POST")
 @route('/active', method="GET")
 def active_all():
-    actives = get_all_last_active(600)
+    actives = get_all_last_active((time.time() - 600, time.time()))
     by_mac = dict(actives)
     return json.dumps(by_mac)
 

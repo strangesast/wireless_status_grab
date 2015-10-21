@@ -17,6 +17,7 @@
     <div class="summary">
       <p>Host count: {{len(host_list)}}</p>
       <p>Active: {{len(active_macs)}}</p>
+      <a href="/time_slider">Slider</a>
     </div>
     <div>
     % if len(host_list) > 0:
