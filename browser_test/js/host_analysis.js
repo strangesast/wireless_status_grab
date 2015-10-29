@@ -160,6 +160,43 @@ var add_hover_listener = function(elem) {
   elem.addEventListener('mouseover', function() {chart_points(by_mac[document.MAC_SELF]['simplified'][index]['pieces']); });
 }
 
+var day_by_index = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+var create_by_day_hour_plot = function(data) {
+  var bydayhourdom = document.getElementById('bydayhour_placeholder');
+  var h = bydayhourdom.parentElement.clientHeight;
+  var w = bydayhourdom.parentElement.clientWidth;
+  var canvas = document.createElement('canvas');
+  canvas.height = h
+  canvas.width = w
+
+  var minbd = data.reduce(function(prev, curr, i) {return prev < curr ? prev : curr;});
+  var maxbd = data.reduce(function(prev, curr, i) {return prev > curr ? prev : curr;});
+  var ctx = canvas.getContext('2d')
+  hh = h / data.length;
+  hw = 40;
+  ol = 1;
+  var cury = 0
+  for(var i=0; i<data.length; i++) {
+    var curr = data[i];
+    var intesity = (curr - minbd) / (maxbd - minbd);
+    var he = [intesity*255,intesity*255,intesity*255];
+    var text = 'rgb(' + he.map(Math.floor).join(', ') + ')';
+    ctx.fillStyle = text
+    ctx.fillRect(0, cury, hw, hh+ol);
+    cury += hh
+  }
+  ctx.fillStyle = 'black';
+  ctx.textBaseline = 'hanging';
+  for(var i=0; i<7*24; i++) {
+    if(i%24 == 0) { 
+      ctx.fillText(i%24 + '  ' + day_by_index[Math.floor(i/24)], hw+5, i*hh);
+    } else if (i%6 == 0) {
+      ctx.fillText(i%24, hw+5, i*hh);
+    }
+  }
+  bydayhourdom.parentElement.replaceChild(canvas, bydayhourdom);
+}
+
 
 var by_mac = {}
 if (document.MAC_SELF) {
@@ -196,6 +233,8 @@ if (document.MAC_SELF) {
   }).then(function() {
     var keys = Object.keys(by_mac);
     var simple = by_mac[document.MAC_SELF]['simplified'];
+    var by_day_hour = by_mac[document.MAC_SELF]['bydayhour'];
+    create_by_day_hour_plot(by_day_hour);
     var rows = record_container.querySelectorAll('[piece-index]');
     for(var i=0; i<rows.length; i++) {
        add_hover_listener(rows[i]);
