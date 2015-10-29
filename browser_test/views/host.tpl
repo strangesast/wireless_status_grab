@@ -41,7 +41,7 @@
       #record-container .side {
         flex-grow: 2;
         min-width: 100px;
-        min-height: 600px;
+        min-height: 800px;
       }
       .graph {
         min-height:150px;

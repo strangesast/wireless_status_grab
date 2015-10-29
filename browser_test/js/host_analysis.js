@@ -164,6 +164,7 @@ var day_by_index = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'fri
 var create_by_day_hour_plot = function(data) {
   var bydayhourdom = document.getElementById('bydayhour_placeholder');
   var h = bydayhourdom.parentElement.clientHeight;
+  var p = bydayhourdom.parentElement;
   var w = bydayhourdom.parentElement.clientWidth;
   var canvas = document.createElement('canvas');
   canvas.height = h
@@ -172,28 +173,34 @@ var create_by_day_hour_plot = function(data) {
   var minbd = data.reduce(function(prev, curr, i) {return prev < curr ? prev : curr;});
   var maxbd = data.reduce(function(prev, curr, i) {return prev > curr ? prev : curr;});
   var ctx = canvas.getContext('2d')
-  hh = h / data.length;
-  hw = 40;
+
+  pd = 20;
+  hh = (h-2*pd) / 24;
+  hw = 50;
   ol = 1;
-  var cury = 0
+  var cury = pd
   for(var i=0; i<data.length; i++) {
+    j = Math.floor(i/24); // day of week
     var curr = data[i];
     var intesity = (curr - minbd) / (maxbd - minbd);
-    var he = [intesity*255,intesity*255,intesity*255];
+    var iintesity = 1 - intesity;
+    var he = [iintesity*255,iintesity*255,iintesity*255];
     var text = 'rgb(' + he.map(Math.floor).join(', ') + ')';
     ctx.fillStyle = text
-    ctx.fillRect(0, cury, hw, hh+ol);
-    cury += hh
+    var box = [j*hw, pd + cury, hw, hh+ol];
+    ctx.fillRect.apply(ctx, box);
+    cury = i%24*hh // hour of day
   }
   ctx.fillStyle = 'black';
   ctx.textBaseline = 'hanging';
-  for(var i=0; i<7*24; i++) {
-    if(i%24 == 0) { 
-      ctx.fillText(i%24 + '  ' + day_by_index[Math.floor(i/24)], hw+5, i*hh);
-    } else if (i%6 == 0) {
-      ctx.fillText(i%24, hw+5, i*hh);
-    }
+  ctx.textAlign = 'center';
+  for(var i=0; i<7; i++) {
+    ctx.fillText(day_by_index[i], hw/2 + i*hw, 5);
   }
+  for(var i=0; i<25; i++) {
+    ctx.fillText(i, pd+hw*7, pd+i*hh);
+  }
+  //ctx.fillText(i%24, hw+5, i*hh);
   bydayhourdom.parentElement.replaceChild(canvas, bydayhourdom);
 }
 
