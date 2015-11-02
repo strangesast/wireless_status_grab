@@ -39,8 +39,8 @@ var progress_func = function(e) {
   }
 }
 
-var time1 = Math.floor(new Date(2015, 9, 20, 6, 0).valueOf() / 1000);
-var time2 = Math.floor(new Date(2015, 9, 20, 8, 0).valueOf() / 1000);
+var time1 = Math.floor(new Date().valueOf() / 1000) - 3600;
+var time2 = Math.floor(new Date().valueOf() / 1000);
 
 var canvas;
 Promise.resolve(function() {

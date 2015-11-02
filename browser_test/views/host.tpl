@@ -4,10 +4,44 @@
       .flex {
         display: flex;
         flex-direction: column;
-        max-height:100%;
+        height:100%;
+      }
+      @media (max-width: 500px) {
+        .flex {
+          height: auto;
+        }
+        .flex > #record-container {
+          flex-direction: column;
+        }
+        .flex > #record-container > .graph-container {
+          order: 2;
+          max-height: calc(100vh - 150px);
+          overflow-y: scroll;
+        }
+        .flex > #record-container > .graph {
+          order: 3;
+        }
+        .flex > #record-container > .side {
+          order: 1;
+          min-height: 600px;
+        }
       }
       #record-container {
+        display: flex;
+        flex-grow: 5;
+        flex-direction: column;
+        overflow: hidden;
+        align-content: stretch;
+        flex-wrap: wrap;
+      }
+      #record-container .graph-container {
         overflow-y: scroll;
+        flex-grow: 2;
+      }
+      #record-container .side {
+        flex-grow: 2;
+        min-width: 100px;
+        min-height: 600px;
       }
       .graph {
         min-height:150px;
@@ -31,10 +65,13 @@
         <p>Sections: {{host['sections']}}</p>
       </div>
       <div id="record-container">
-        <progress id="table_placeholder" max="100" value="0">Loading...</progress>
-      </div>
-      <div class="graph">
-        <canvas id="simplified_graph"></canvas>
+        <div class="graph-container"><progress id="table_placeholder" max="100" value="0">Loading...</progress></div>
+        <div class="side" id="side">
+          <span id="bydayhour_placeholder">Loading bydayhour</span>
+        </div>
+        <div class="graph">
+          <canvas id="simplified_graph"></canvas>
+        </div>
       </div>
     </div>
     <script>

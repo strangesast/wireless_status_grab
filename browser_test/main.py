@@ -239,12 +239,20 @@ def host_summary(mac):
         simplified = True if 'simplified' in params else False
         records = get_records_by_mac(mac)
 
+        by_day_hour = [0 for i in range(24*7)]
+        for record in records:
+            t = record['time']
+            d = datetime.datetime.fromtimestamp(float(t))
+            h = d.weekday()*24 + d.hour
+            by_day_hour[h] += 1
+
         response = {'records' : records}
         response = {} # big
 
         if simplified:
             simplified = simplify_records(records, 60*15)
             response['simplified'] = simplified
+            response['bydayhour'] = by_day_hour
 
 
         return json.dumps(response)
