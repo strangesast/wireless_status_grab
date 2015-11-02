@@ -65,7 +65,7 @@ for i in range(len(by_point[0][1])):
     ax.plot(x, y)
     ax.axis([-1, 2, 0, 2])
 
-    filepath = '/home/samuel/Downloads/test_frame{}.png'.format(i)
+    filepath = './test_frame{}.png'.format(i)
     fig.savefig(filepath, bbox_inches='tight')
     ax.cla()
     for p, a in axis_by_point.items():
@@ -74,6 +74,6 @@ for i in range(len(by_point[0][1])):
 print('joining...')
 conversion = call([
     "convert",
-    "/home/samuel/Downloads/test_frame%d.png[0-{}]".format(len(by_point[0][1])-1),
-    "/home/samuel/Downloads/test_animation_distorted.gif"
+    "./test_frame%d.png[0-{}]".format(len(by_point[0][1])-1),
+    "./test_animation_distorted.gif"
 ])
