@@ -162,11 +162,12 @@ var add_hover_listener = function(elem) {
 
 var day_by_index = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 var create_by_day_hour_plot = function(data) {
-  var bydayhourdom = document.getElementById('bydayhour_placeholder');
+  var bydayhourdom = document.getElementById('bydayhour_placeholder') || document.getElementById('bydayhour');
   var h = bydayhourdom.parentElement.clientHeight;
   var p = bydayhourdom.parentElement;
   var w = bydayhourdom.parentElement.clientWidth;
   var canvas = document.createElement('canvas');
+  canvas.setAttribute('id', 'bydayhour');
   canvas.height = h
   canvas.width = w
 
@@ -184,7 +185,8 @@ var create_by_day_hour_plot = function(data) {
     var curr = data[i];
     var intesity = (curr - minbd) / (maxbd - minbd);
     var iintesity = 1 - intesity;
-    var he = [iintesity*255,iintesity*255,iintesity*255];
+    var he = [(1-iintesity)*255,0,(iintesity)*255];
+    var he = [iintesity*220,iintesity*220,iintesity*220];
     var text = 'rgb(' + he.map(Math.floor).join(', ') + ')';
     ctx.fillStyle = text
     var box = [j*hw, pd + cury, hw, hh+ol];
@@ -251,3 +253,61 @@ if (document.MAC_SELF) {
 } else {
   console.log("template failed to add 'self' mac or script hasn't loaded properly yet");
 }
+
+test_button = document.getElementById('test-button');
+
+var refresh_by_day_hour = function(week_num) {
+  var url = '/bdh/' + document.MAC_SELF + '/day/' + String(week_num);
+  test_button.disabled = true;
+  makeRequest(url, 'GET', null, null).then(function(result) {
+    test_button.disabled = false;
+    if(result.length > 0) {
+      create_by_day_hour_plot(result);
+      test_button.textContent = week_num + 1;
+    } else {
+      test_button.textContent = 0;
+    }
+  });
+}
+
+var by_day_hour_animation = function() {
+  var checkfor = function(i, finishedCallback) {
+    var url = '/bdh/' + document.MAC_SELF + '/day/' + String(i);
+    makeRequest(url, 'GET', null, null).then(function(result) {
+      if (result.length > 0) {
+        toast[i] = result
+          return checkfor(i+1, finishedCallback);
+      } else {
+        finishedCallback(toast)
+      }
+    });
+  }
+
+  var finished = function(result) {
+    for(var prop in toast) {
+      var index = parseInt(prop);
+      (function(i) {
+        setTimeout(function() {
+          console.log(i);
+          console.log(toast[i]);
+          create_by_day_hour_plot(toast[i]);
+        }, 1000*i);
+      })(index);
+    }
+  }
+
+  if(Object.keys(toast).length > 0) {
+    finished(toast);
+  } else {
+    checkfor(0, finished);
+  }
+}
+
+var toast = {}
+test_button_listener = function(e) {
+  //var week_num = parseInt(test_button.textContent);
+  //refresh_by_day_hour(week_num);
+  by_day_hour_animation();
+}
+
+test_button.addEventListener('click', test_button_listener);

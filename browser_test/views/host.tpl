@@ -72,6 +72,7 @@
         <div class="graph">
           <canvas id="simplified_graph"></canvas>
         </div>
+        <button id="test-button">0</button>
       </div>
     </div>
     <script>

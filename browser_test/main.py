@@ -224,6 +224,15 @@ def recalcuate(mac):
         return "bad mac!"
 
 
+def get_by_day_hour_stuff(records):
+    by_day_hour = [0 for i in range(24*7)]
+    for record in records:
+        t = record['time']
+        d = datetime.datetime.fromtimestamp(float(t))
+        h = d.weekday()*24 + d.hour
+        by_day_hour[h] += 1
+    return by_day_hour
+
 @route('/host/<mac>', method="POST")
 def host_summary(mac):
     body_raw = request.body.read()#.get('params'))
@@ -239,12 +248,12 @@ def host_summary(mac):
         simplified = True if 'simplified' in params else False
         records = get_records_by_mac(mac)
 
-        by_day_hour = [0 for i in range(24*7)]
-        for record in records:
-            t = record['time']
-            d = datetime.datetime.fromtimestamp(float(t))
-            h = d.weekday()*24 + d.hour
-            by_day_hour[h] += 1
+        #by_day_hour = [0 for i in range(24*7)]
+        #for record in records:
+        #    t = record['time']
+        #    d = datetime.datetime.fromtimestamp(float(t))
+        #    h = d.weekday()*24 + d.hour
+        #    by_day_hour[h] += 1
 
         response = {'records' : records}
         response = {} # big
@@ -252,7 +261,7 @@ def host_summary(mac):
         if simplified:
             simplified = simplify_records(records, 60*15)
             response['simplified'] = simplified
-            response['bydayhour'] = by_day_hour
+            response['bydayhour'] = get_by_day_hour_stuff(records)
 
 
         return json.dumps(response)
@@ -276,6 +285,53 @@ def active_host(mac):
         return json.dumps(last_active(mac))
     else:
         return json.dumps({'error' : "bad mac"})
+
+@route('/bdh/<mac>/week/<week_num>', method="GET")
+def by_day_hour_getter(mac, week_num):
+    mac = clean_mac(mac)
+    assert week_num.isdigit()
+    week_seconds = 60*60*24*7
+    week_num = int(week_num)
+    lower = week_seconds*week_num
+    upper = week_seconds*(week_num+1)
+    print(lower, upper)
+    mintime = cursor.execute("SELECT MIN(datetime) from wireless_hosts where mac = ?", (mac, )).fetchone()[0]
+    if mintime is None:
+        return json.dumps([])
+    mintime = int(mintime)
+    params = [mintime + week_seconds*week_num, mintime + week_seconds*(week_num+1), mac]
+    res = cursor.execute("SELECT datetime FROM wireless_hosts where datetime > ? and datetime < ? and mac = ?", map(str, params)).fetchall()
+    if len(res) == 0:
+        return json.dumps([])
+
+    res = map(lambda x: x[0], res)
+
+    return json.dumps(get_by_day_hour_stuff(map(lambda x: {'time': x}, res)))
+
+@route('/bdh/<mac>/day/<day_num>', method="GET")
+def by_day_hour_getter_two(mac, day_num):
+    mac = clean_mac(mac)
+    assert day_num.isdigit()
+    day_seconds = 60*60*24
+    week_seconds = day_seconds*7
+    day_num = int(day_num)
+    lower = day_seconds*day_num
+    upper = day_seconds*(day_num+1)
+    print(lower, upper)
+    mintime = cursor.execute("SELECT MIN(datetime) from wireless_hosts where mac = ?", (mac, )).fetchone()[0]
+    if mintime is None:
+        return json.dumps([])
+    mintime = int(mintime)
+    params = [mintime + day_seconds*day_num, mintime + day_seconds*(day_num+1) + week_seconds, mac]
+    res = cursor.execute("SELECT datetime FROM wireless_hosts where datetime > ? and datetime < ? and mac = ?", map(str, params)).fetchall()
+    if len(res) == 0:
+        return json.dumps([])
+
+    res = map(lambda x: x[0], res)
+
+    return json.dumps(get_by_day_hour_stuff(map(lambda x: {'time': x}, res)))
+
+
 
 
 @route('/static/<filepath:path>')
