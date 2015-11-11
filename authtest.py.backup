@@ -5,7 +5,6 @@ from requests.auth import HTTPBasicAuth as auth
 import json
 import sqlite3 as sqlite
 import time
-from motion_start_stop import action
 
 
 ### Router connection settings
@@ -72,16 +71,6 @@ def probe_router(url, auth, dic=False):
 myauth = auth(username, password)
 
 probe = probe_router(url, myauth)
-mac_set = set([x[0].lower() for x in probe])
-special_mac = 'FC:C2:DE:AA:B5:E9'.lower()
-
-try:
-    if special_mac in mac_set:
-        print(action(False))
-    else:
-        print(action(True))
-except:
-    print('bad')
 
 cursor.executemany('insert into wireless_hosts values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', probe) 
 connection.commit()
