@@ -1,26 +1,5 @@
 hosts_container = document.getElementById('hosts-container');
 
-var makeRequest = function(url, method, updateFunc) {
-  return new Promise(function(resolve, reject) {
-    var request = new XMLHttpRequest();
-    request.open(method, url, true);
-    request.onload = function() {
-      if (request.status >= 200 && request.status < 400) {
-        return resolve(request);
-      } else {
-        return reject(request);
-      }
-    };
-    request.onerror = function() {
-      return reject(request);
-    };
-    if(updateFunc) {
-      request.onprogress = updateFunc;
-    }
-    request.send();
-  });
-};
-
 monthAbbr = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Nov', 'Oct', 'Dec'];
 var formatDate = function(dateObject) {
   var day = dateObject.getDay(),
@@ -55,7 +34,7 @@ makeRequest('/hosts/lastactive', 'GET', null).then(function(response) {
   }
 
 }).catch(function(error) {
-  alert(error);
+  alert(JSON.stringify(error));
 });
 
 sortByType = function(type) {
