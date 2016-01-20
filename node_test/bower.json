@@ -1,0 +1,23 @@
+{
+  "name": "node_test",
+  "description": "",
+  "main": "",
+  "authors": [
+    "Sam Zagrobelny <strangesast@gmail.com>"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/strangesast/wireless_status_grab",
+  "moduleType": [],
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.2.0",
+    "bootstrap": "~3.3.6"
+  }
+}

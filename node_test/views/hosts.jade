@@ -1,0 +1,33 @@
+extends layout
+
+block head
+  link(href="/stylesheets/hosts.css", rel="stylesheet")
+
+block content
+  .navbar
+    .container-fluid
+      h3.navbar-text.navbar-left Hosts
+      ul.nav.navbar-nav.navbar-right
+        li
+          .btn-group.navbar-btn
+            button.btn.btn-default.dropdown-toggle(type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false") sort by <span class="caret"></span>
+            ul.dropdown-menu
+              li
+                a(href="#bydate") Date
+              li
+                a(href="#byname") Name
+              li
+                a(href="#bymac") Mac
+
+  div.list-group#hosts-container
+    each host in hosts
+      a.list-group-item(mac="#{host.mac}" hostname="#{host.hostname}" datetime="" type="host", href="/hosts/#{host.mac}")
+        if ['*'].indexOf(host.hostname) > -1
+          h4.list-group-item-heading #{host.mac}
+        else
+          h4.list-group-item-heading #{host.hostname} <small>#{host.mac}</small>
+
+        p.list-group-item-text.last-active unknown
+
+block scripts
+  script(src="/javascripts/hosts.js")

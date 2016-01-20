@@ -1,0 +1,30 @@
+extends layout
+
+block content
+  if properties == null
+    h1 There are no records for this host or it does not exist.
+  else
+    h1 Host page
+    div(title="updated #{new Date(properties.datetime*1000).toISOString().slice(0,10)}")
+      h3 Properties
+      div.row
+        div.col-xs-1 Mac:
+        div.col-xs-1 #{properties.mac}
+      div.row
+        div.col-xs-1 Hostname:
+        div.col-xs-1 #{properties.hostname}
+      if properties.hostname_alias1
+        div.row
+          div.col-xs-1 Alias1:
+          div.col-xs-1 #{properties.hostname_alias1}
+      if properties.hostname_alias1
+        div.row
+          div.col-xs-1 Alias2:
+          div.col-xs-1 #{properties.hostname_alias2}
+    h1 Lastest Activity
+
+    pre=JSON.stringify(properties)
+
+
+block scripts
+  script(src="/javascripts/host.js")
