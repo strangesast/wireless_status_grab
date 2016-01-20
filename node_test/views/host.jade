@@ -8,19 +8,19 @@ block content
     div(title="updated #{new Date(properties.datetime*1000).toISOString().slice(0,10)}")
       h3 Properties
       div.row
-        div.col-xs-1 Mac:
-        div.col-xs-1 #{properties.mac}
+        div.col-xs-2 Mac:
+        div.col-xs-2 #{properties.mac}
       div.row
-        div.col-xs-1 Hostname:
-        div.col-xs-1 #{properties.hostname}
+        div.col-xs-2 Hostname:
+        div.col-xs-2 #{properties.hostname}
       if properties.hostname_alias1
         div.row
-          div.col-xs-1 Alias1:
-          div.col-xs-1 #{properties.hostname_alias1}
+          div.col-xs-2 Alias1:
+          div.col-xs-2 #{properties.hostname_alias1}
       if properties.hostname_alias1
         div.row
-          div.col-xs-1 Alias2:
-          div.col-xs-1 #{properties.hostname_alias2}
+          div.col-xs-2 Alias2:
+          div.col-xs-2 #{properties.hostname_alias2}
     h1 Lastest Activity
 
     pre=JSON.stringify(properties)

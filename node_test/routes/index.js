@@ -7,7 +7,6 @@ var db_location = config.db_location;
 
 var db = new sqlite3.Database(db_location);
 
-
 var queryPromise = function(query) {
   return new Promise(function(resolve, reject) {
     db.all(query, function(err, rows) {
@@ -19,7 +18,6 @@ var queryPromise = function(query) {
   });
 };
 
-/* GET home page. */
 router.get('/', function(req, res, next) {
   return res.render('index');
 });
@@ -61,5 +59,43 @@ router.get('/hosts/:hostmac', function(req, res, next) {
     return res.json(error);
   });
 });
+
+router.get('/hosts/:hostmac/records', function(req, res, next) {
+  var min = null,
+      max = null;
+  hostmac = req.params.hostmac;
+  d = new Date();
+  d.setDate(d.getDate()-7); // records from as much as 7 days ago
+  min = Math.floor(d.getTime() / 1000);
+  query = 'select mac, signal_strength, datetime from wireless_hosts where';
+  if(min !== null || max !== null) {
+    query += ' datetime';
+  }
+  if(min !== null) {
+    query += ' >= ' + min;
+  }
+  if(min !== null && max !== null) {
+    query += ' and';
+  }
+  if(max !== null) {
+    query += ' datetime <= ' + max;
+  }
+  if(max !== null || min !== null) {
+    query += ' and';
+  }
+  query += ' mac="' + hostmac + '"';
+  console.log(query);
+  queryPromise(query).then(function(result) {
+    return res.json(result);
+
+  }).catch(function(error) {
+    return res.json(error);
+  });
+});
+
+router.get('/records/', function(req, res, next) {
+  return res.render('records');
+});
+
 
 module.exports = router;
