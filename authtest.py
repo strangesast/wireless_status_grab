@@ -20,7 +20,7 @@ url = settings['url']
 
 
 ### Sqlite db setup
-connection = sqlite.connect('wireless_data.db')
+connection = sqlite.connect('/home/samuel/wireless_data.db')
 cursor = connection.cursor()
 
 check_for_table = "SELECT name FROM sqlite_master WHERE type='table' AND name='wireless_hosts';"
@@ -80,10 +80,11 @@ try:
         print(action(False))
     else:
         print(action(True))
-except:
+except Exception as e:
     print('bad')
 
 cursor.executemany('insert into wireless_hosts values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', probe) 
-connection.commit()
+res = connection.commit()
+print(res)
 
 print('completed successfully')

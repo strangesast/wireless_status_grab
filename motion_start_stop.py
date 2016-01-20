@@ -5,7 +5,7 @@ auth = ('toast', 'toast')
 pi_ip = '192.168.1.138:8080'
 str_ip = '127.0.0.1:8080'
 base_url= 'http://'
-ips = [base_url + x for x in [pi_ip, str_ip]]
+ips = [base_url + x for x in [pi_ip]]#, str_ip]]
 start_url = '/0/detection/start'
 pause_url = '/0/detection/pause'
 
