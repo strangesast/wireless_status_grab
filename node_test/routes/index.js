@@ -26,7 +26,7 @@ router.get('/hosts/', function(req, res, next) {
   hosts = [];
   queries = [
     "SELECT * from wireless_arp_table",
-    "select distinct mac from wireless_hosts where datetime > (select max(datetime) from wireless_hosts) - 10000"
+    "select distinct mac from wireless_hosts where datetime > (select max(datetime) from wireless_hosts) - 180"
     //"SELECT DISTINCT mac from wirless_arp_table"// WHERE datetime = (SELECT max(datetime) FROM wireless_hosts)"
     //'select mac, max(datetime) from wireless_hosts group by mac;'
   ];
