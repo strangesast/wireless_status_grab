@@ -1,0 +1,15 @@
+extends layout
+
+block content
+  h1 Records
+  canvas#records-canvas
+  .list-group
+    each value, key in records
+      .list-group-item
+        p=key
+
+block scripts
+  script().
+    var localdata = localdata || {};
+    localdata.records = !{JSON.stringify(records)};
+  script(src="/javascripts/records.js")

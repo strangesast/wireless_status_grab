@@ -106,7 +106,24 @@ router.get('/hosts/:hostmac/records', function(req, res, next) {
 });
 
 router.get('/records/', function(req, res, next) {
-  return res.render('records');
+  query = "select mac, datetime, signal_strength from wireless_hosts where datetime > (select max(datetime) from wireless_hosts) - 600 order by mac asc";
+  queryPromise(query).then(function(result) {
+    var currentMac = "";
+    var out = {};
+    for(var i=0; i<result.length; i++) {
+      var row = result[i];
+      if (currentMac !== row.mac) {
+        currentMac = row.mac;
+        out[currentMac] = [];
+      }
+      delete row.mac;
+      out[currentMac].push(row);
+    }
+    return res.render('records', {records: out});
+
+  }).catch(function(error) {
+    res.json(error);
+  });
 });
 
 
