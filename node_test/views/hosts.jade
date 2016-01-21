@@ -29,7 +29,7 @@ block content
 
   div.list-group#hosts-container
     each host in hosts
-      div.row.list-group-item(mac="#{host.mac}" hostname="#{host.hostname}" datetime="" type="host")
+      div.row.list-group-item(mac="#{host.mac}" hostname="#{host.hostname}" datetime="" type="host" class=host.home == true ? "active" : "")
         div.col-md-6.col-xs-7
           if ['*'].indexOf(host.hostname) > -1
             h4.list-group-item-heading #{host.mac}

@@ -25,13 +25,25 @@ router.get('/', function(req, res, next) {
 router.get('/hosts/', function(req, res, next) {
   hosts = [];
   queries = [
-    "SELECT * from wireless_arp_table"
+    "SELECT * from wireless_arp_table",
+    "select distinct mac from wireless_hosts where datetime > (select max(datetime) from wireless_hosts) - 10000"
+    //"SELECT DISTINCT mac from wirless_arp_table"// WHERE datetime = (SELECT max(datetime) FROM wireless_hosts)"
     //'select mac, max(datetime) from wireless_hosts group by mac;'
   ];
   Promise.all(queries.map(function(query) {
     return queryPromise(query);
   })).then(function(results) {
     rows = results[0];
+    var macs = results[1].map(function(e) {
+      return e.mac;
+    });
+    rows.map(function(e) {
+      if(macs.indexOf(e.mac) > -1) {
+        e.home = true;
+      } else {
+        e.home = false;
+      }
+    });
     return res.render('hosts', { hosts: rows });
   });
 });

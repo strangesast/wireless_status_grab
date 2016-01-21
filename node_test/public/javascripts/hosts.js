@@ -41,7 +41,7 @@ sortByType = function(type) {
   var reverse = false;
   if(type == "mac") {
     type = 'mac';
-  } else if (type=="case") {
+  } else if (type=="name") {
     type = "hostname";
   } else {
     type = 'datetime';
