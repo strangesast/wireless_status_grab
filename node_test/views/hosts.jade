@@ -25,7 +25,11 @@ block content
             li
               a(href="#bymac") Mac
         li
-          button.navbar-btn.btn.btn-default(disabled=true) Compare
+          button.navbar-btn.btn.btn-default(disabled=true)#compare-hosts Compare
+
+  if compare
+    div.message-container
+      pre !{JSON.stringify(compare)}
 
   div.list-group#hosts-container
     each host in hosts

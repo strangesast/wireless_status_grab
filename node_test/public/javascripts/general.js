@@ -18,3 +18,17 @@ var makeRequest = function(url, method, updateFunc) {
     request.send();
   });
 };
+
+generateURIfromObj = function(obj) {
+  var out = []
+  for(var prop in obj) {
+    out.push(prop + '=' + encodeURIComponent(obj[prop]));
+  }
+  return '?' + out.join('&');
+}
+
+//var CanvasGraph = class CanvasGraph {
+//  constructor(canvas_element) {
+//    this.canvas = canvas_element
+//  }
+//}

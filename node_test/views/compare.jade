@@ -1,0 +1,13 @@
+extends layout
+
+block content
+  pre=JSON.stringify(data)
+
+
+
+block scripts
+  script().
+    var localdata = localdata || {};
+    localdata.compare = !{JSON.stringify(data)};
+
+  script(src="/javascripts/compare.js")

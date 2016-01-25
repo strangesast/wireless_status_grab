@@ -44,7 +44,16 @@ router.get('/hosts/', function(req, res, next) {
         e.home = false;
       }
     });
-    return res.render('hosts', { hosts: rows });
+    var data = {};
+    data.hosts = rows;
+
+    // flash
+    flash_compare = req.flash('compare');
+    if(flash_compare) {
+      console.log(flash_compare);
+      data.compare = flash_compare;
+    }
+    return res.render('hosts', data);
   });
 });
 
@@ -126,5 +135,51 @@ router.get('/records/', function(req, res, next) {
   });
 });
 
+
+router.get('/compare', function(req, res, next) {
+  // should also check that both mac address exist / are valid
+  //res.render('compare');
+  var hosts = req.query;
+  var macs = Object.keys(hosts).map(function(e) {
+    return hosts[e];
+  })
+  //var query = 'SELECT EXISTS(SELECT 1 FROM wireless_hosts WHERE mac="' + macs[0] + '" LIMIT 1)';
+  var queries = [];
+  Promise.all(macs.map(function(mac) {
+    var query = 'SELECT EXISTS(SELECT 1 FROM wireless_hosts WHERE mac="' + mac + '" LIMIT 1)'
+    queries.push(query);
+    return queryPromise(query);
+  })).then(function(result) {
+    var justvalid = result.map(function(elem, index) {
+      for (var prop in elem[0]) {
+        return elem[0][prop];
+      };
+    });
+    return justvalid;
+  }).then(function(clean) {
+    if (clean.every(function(element) {
+      return String(element) !== '1' ? false : true;
+    })) {
+      Promise.all(macs.map(function(mac) {
+        var d = new Date();
+        d.setDate(d.getDate()-7); // records from as much as 7 days ago
+        min = Math.floor(d.getTime() / 1000);
+        var query = 'select mac, signal_strength, datetime from wireless_hosts where mac="' + mac + '" and datetime >= ' + min;
+        return queryPromise(query);
+      })).then(function(second_result) {
+        return res.render('compare', {data: second_result});
+      });
+    } else {
+      req.flash('compare', {
+        message: 'one or more macs not found',
+        data: clean
+      });
+      res.redirect('/hosts/');
+    }
+
+  }).catch(function(error) {
+    return res.json(error);
+  });
+});
 
 module.exports = router;
