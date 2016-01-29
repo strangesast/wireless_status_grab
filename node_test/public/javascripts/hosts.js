@@ -12,7 +12,7 @@ var formatDate = function(dateObject) {
 
 var localdata = {};
 
-makeRequest('/hosts/lastactive', 'GET', null).then(function(response) {
+general.makeRequest('/hosts/lastactive', 'GET', null).then(function(response) {
   var resp = JSON.parse(response.response);
   var activeByMac = {};
   for(var j=0; rec=resp[j], j < resp.length; j++) {
@@ -97,7 +97,7 @@ var compareButtonSelectedEvent = function(e) {
     var selected_element = localdata.selected[i];
     out['host' + i] = selected_element;
   }
-  window.location.href = '/compare' + generateURIfromObj(out);
+  window.location.href = '/compare' + general.generateURIfromObj(out);
   return true;
 }
 

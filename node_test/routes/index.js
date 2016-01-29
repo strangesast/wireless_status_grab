@@ -142,18 +142,18 @@ router.get('/compare', function(req, res, next) {
   var hosts = req.query;
   var macs = Object.keys(hosts).map(function(e) {
     return hosts[e];
-  })
+  });
   //var query = 'SELECT EXISTS(SELECT 1 FROM wireless_hosts WHERE mac="' + macs[0] + '" LIMIT 1)';
   var queries = [];
   Promise.all(macs.map(function(mac) {
-    var query = 'SELECT EXISTS(SELECT 1 FROM wireless_hosts WHERE mac="' + mac + '" LIMIT 1)'
+    var query = 'SELECT EXISTS(SELECT 1 FROM wireless_hosts WHERE mac="' + mac + '" LIMIT 1)';
     queries.push(query);
     return queryPromise(query);
   })).then(function(result) {
     var justvalid = result.map(function(elem, index) {
       for (var prop in elem[0]) {
         return elem[0][prop];
-      };
+      }
     });
     return justvalid;
   }).then(function(clean) {
@@ -167,7 +167,7 @@ router.get('/compare', function(req, res, next) {
         var query = 'select mac, signal_strength, datetime from wireless_hosts where mac="' + mac + '" and datetime >= ' + min;
         return queryPromise(query);
       })).then(function(second_result) {
-        return res.render('compare', {data: second_result});
+        return res.render('compare', {data: second_result, macs: macs});
       });
     } else {
       req.flash('compare', {

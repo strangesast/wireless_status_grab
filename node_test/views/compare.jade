@@ -1,9 +1,8 @@
 extends layout
 
 block content
-  pre=JSON.stringify(data)
-
-
+  h1 Compare <small> !{macs.join(' & ')} </small>
+  #canvas-container
 
 block scripts
   script().

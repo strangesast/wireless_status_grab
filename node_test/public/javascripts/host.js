@@ -19,7 +19,7 @@ minmax = function(iterable, key) {
 
 var localdata = {};
 
-makeRequest(records_loc, 'GET', null).then(function(result) {
+general.makeRequest(records_loc, 'GET', null).then(function(result) {
   var records = JSON.parse(result.response);
   localdata.records = records;
 
@@ -63,7 +63,7 @@ var lastListener = null;
 var clearCanvas = function() {
   var ctx = records_canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas_width, canvas_height);
-}
+};
 
 var drawLine = function(percent_x) {
   var ctx = records_canvas.getContext('2d');
@@ -71,7 +71,7 @@ var drawLine = function(percent_x) {
   ctx.moveTo(percent_x*canvas_width, 0);
   ctx.lineTo(percent_x*canvas_width, canvas_height);
   ctx.stroke();
-}
+};
 
 var drawData = function() {
   var records = localdata.records;
@@ -124,7 +124,7 @@ var drawData = function() {
     }
   }
   ctx.restore();
-}
+};
 
 var recalculateCanvas = function() {
   var _parent = records_canvas.parentElement;
@@ -165,7 +165,7 @@ var calculateDataProps = function (data, settings) {
     out[elem.varname] = vals;
   }
   return out;
-}
+};
 
 window.addEventListener('resize', function(e) {
   recalculateCanvas();
