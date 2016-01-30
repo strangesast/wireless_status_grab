@@ -1,15 +1,40 @@
 var data = localdata.compare;
 
-var Group = function(member) {
-  Group.members.push(this);
+var Group = function(initialWidth) {
+  this.plots = [];
+  this.xmin = Infinity;
+  this.xmax = -Infinity;
+  this.ymin = Infinity;
+  this.ymax = -Infinity;
+  Group.groups.push(this);
   return this;
 };
 Group.groups = [];
 
-Group.prototype.getMax = function(property) {
-  return Group.members.reduce(function(a, b) {
-    return a[property] > b[property] ? a[property] : b[property];
-  });
+Group.prototype.add = function(plot) {
+  group.xmin = group.xmin > plot.dateMin ? plot.dateMin : group.xmin;
+  group.xmax = group.xmax < plot.dateMax ? plot.dateMax : group.xmax;
+  group.ymin = group.ymin < plot.signalMin ? plot.signalMin : group.ymin;
+  group.ymax = group.ymax < plot.signalMax ? plot.signalMax : group.ymax;
+  this.plots.push(plot);
+};
+
+Group.prototype.initialize = function(parentElement) {
+  this.parentElement = parentElement;
+  this.plots.forEach(function(group) {
+    return function(plot) {
+      plot.recalculateCanvas(group.parentElement.offsetWidth, group.xmin, group.xmax);
+      group.parentElement.appendChild(plot.canvas);
+    };
+  }(this));
+};
+
+Group.prototype.recalculateCanvas = function() {
+  this.plots.forEach(function(group) {
+    return function(plot) {
+      plot.recalculateCanvas(group.parentElement.offsetWidth, group.xmin, group.xmax);
+    };
+  }(this));
 };
 
 var Plot = function(plot_data, group, initialWidth) {
@@ -24,13 +49,9 @@ var Plot = function(plot_data, group, initialWidth) {
   this.dateMin = general.min(plot_data, 'datetime');
   this.dateMax = general.max(plot_data, 'datetime');
 
-  console.log(this.dateMin, this.dateMax, this.signalMin, this.signalMax);
-
   Plot.plots.push(this);
 
-  this.recalculateCanvas(initialWidth || null);
-
-  return canvas_element;
+  return this;
 };
 
 Plot.plots = [];
@@ -45,26 +66,35 @@ Plot.prototype.drawCanvas = function(xmin_override, xmax_override) {
       smin = this.signalMin;
 
   ctx.beginPath();
+  var reset = true;
   for(var i=0; i < this.data.length; i++) {
     var point = this.data[i];
     var ss = point.signal_strength;
     var dt = point.datetime;
     var xpos = (dt - dmin)/(dmax - dmin)*cw;
     var ypos = (1-(ss - smin)/(smax - smin))*ch;
-    ctx.lineTo(xpos, ypos);
+    if(reset) {
+      ctx.beginPath();
+      ctx.moveTo(xpos, ypos);
+      reset = false;
+    } else {
+      ctx.lineTo(xpos, ypos);
+    }
+    if(this.data[i+1 < this.data.length ? i+1 : i].datetime - dt > 120 || i == this.data.length - 1) {
+      reset = true;
+      ctx.stroke();
+    }
   }
-  ctx.stroke();
   return;
 };
 
-Plot.prototype.recalculateCanvas = function(width) {
+Plot.prototype.recalculateCanvas = function(width, newmin, newmax) {
   if(width) {
     this.canvas.width = width;
   } else {
     this.canvas.width = this.canvas.parentNode.offsetWidth;
   }
-  this.drawCanvas();
-
+  this.drawCanvas(newmin, newmax);
   return;
 };
 
@@ -73,12 +103,17 @@ var canvas_container = document.getElementById('canvas-container');
 var group = new Group();
 for(var i=0; i < data.length; i++) {
   var dataSet = data[i];
-  var plot_canvas = new Plot(dataSet, group, canvas_container.offsetWidth);
-  canvas_container.appendChild(plot_canvas);
+  group.add(new Plot(dataSet, group));
 }
+group.initialize(canvas_container);
 
+var resizeWaiting = null;
 window.onresize = function() {
-  Plot.plots.forEach(function(plot) {
-    plot.recalculateCanvas();
-  });
+  clearTimeout(resizeWaiting);
+  resizeWaiting = setTimeout(function() {
+    Group.groups.forEach(function(group) {
+      group.recalculateCanvas();
+    });
+  }, 500);
+  return;
 };
