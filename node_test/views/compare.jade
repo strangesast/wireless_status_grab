@@ -8,5 +8,6 @@ block scripts
   script().
     var localdata = localdata || {};
     localdata.compare = !{JSON.stringify(data)};
+    localdata.macs = !{JSON.stringify(macs)};
 
   script(src="/javascripts/compare.js")

@@ -1,4 +1,5 @@
 var data = localdata.compare;
+var macs = localdata.macs;
 
 var Group = function(initialWidth) {
   this.plots = [];
@@ -24,7 +25,7 @@ Group.prototype.initialize = function(parentElement) {
   this.plots.forEach(function(group) {
     return function(plot) {
       plot.recalculateCanvas(group.parentElement.offsetWidth, group.xmin, group.xmax);
-      group.parentElement.appendChild(plot.canvas);
+      group.parentElement.appendChild(plot.html);
     };
   }(this));
 };
@@ -37,10 +38,20 @@ Group.prototype.recalculateCanvas = function() {
   }(this));
 };
 
-var Plot = function(plot_data, group, initialWidth) {
+var Plot = function(name, plot_data, group, initialWidth) {
+  var container = general.domElemWithProps('div', {});
+  var dom_title = general.domElemWithProps('span', {});
+  dom_title.textContent = name;
+  container.appendChild(dom_title);
+
   var canvas_element = general.domElemWithProps('canvas', {});
+  container.appendChild(canvas_element);
+
   canvas_element.height = 100;
+
+  this.name = name;
   this.canvas = canvas_element;
+  this.html = container;
   this.data = plot_data;
   this.group = group;
 
@@ -103,7 +114,8 @@ var canvas_container = document.getElementById('canvas-container');
 var group = new Group();
 for(var i=0; i < data.length; i++) {
   var dataSet = data[i];
-  group.add(new Plot(dataSet, group));
+  var mac = macs[i];
+  group.add(new Plot(mac, dataSet, group));
 }
 group.initialize(canvas_container);
 
